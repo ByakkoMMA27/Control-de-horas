@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Control de Horarios Pro</title>
+<style>
+  :root{
+    --bg:#eef1f4;
+    --panel:#ffffff;
+    --line:#cfd6dd;
+    --grid:#dfe5ea;
+    --text:#111827;
+    --muted:#6b7280;
+    --accent:#2563eb;
+    --accent-2:#16a34a;
+    --danger:#dc2626;
+    --warning:#b45309;
+    --shadow:none;
+    --radius:4px;
+    --font: "Segoe UI", Calibri, Arial, sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:var(--font);
+    font-size:14px;
+    background:var(--bg);
+    color:var(--text);
+  }
+
+  .app{
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+
+  .toolbar{
+    position:sticky;
+    top:0;
+    z-index:30;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    padding:7px 9px;
+    background:#f8fafc;
+    border-bottom:1px solid var(--line);
+  }
+
+  .brand{
+    font-weight:700;
+    font-size:14px;
+    padding-right:6px;
+    margin-right:4px;
+    border-right:1px solid var(--line);
+    white-space:nowrap;
+  }
+
+  .toolbar .spacer{flex:1}
+
+  button, input, label{
+    font:inherit;
+  }
+
+  .btn{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--text);
+    border-radius:6px;
+    padding:7px 10px;
+    cursor:pointer;
+    line-height:1;
+    box-shadow:none;
+  }
+  .btn:hover{background:#f9fafb}
+  .btn.primary{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+  .btn.primary:hover{filter:brightness(.96)}
+  .btn.success{
+    background:var(--accent-2);
+    color:#fff;
+    border-color:var(--accent-2);
+  }
+  .btn.danger{
+    background:var(--danger);
+    color:#fff;
+    border-color:var(--danger);
+  }
+  .btn.warn{
+    background:var(--warning);
+    color:#fff;
+    border-color:var(--warning);
+  }
+
+  .tabs-wrap{
+    background:#eff2f6;
+    border-bottom:1px solid var(--line);
+    padding:6px 8px 0;
+    overflow:auto;
+  }
+  .tabs{
+    display:flex;
+    gap:4px;
+    min-width:max-content;
+  }
+  .tab{
+    border:1px solid var(--line);
+    border-bottom:none;
+    background:#e5e7eb;
+    padding:8px 12px;
+    border-radius:4px 4px 0 0;
+    cursor:pointer;
+    white-space:nowrap;
+    font-size:13px;
+    color:#374151;
+  }
+  .tab.active{
+    background:#fff;
+    font-weight:700;
+    color:#111827;
+  }
+
+  .sheet{
+    flex:1;
+    padding:10px;
+  }
+
+  .sheet-box{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:4px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+
+  .sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line);background:#fff;}
+
+  .sheet-title{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+
+  .sheet-title h1{margin:0;font-size:15px;font-weight:700;}
+
+  .sheet-title p{margin:0;color:var(--muted);font-size:11px;}
+
+  .sheet-actions{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .content{overflow:auto;max-height:calc(100vh - 150px);}
+
+  table{width:100%;min-width:680px;border-collapse:collapse;background:#fff;table-layout:fixed;}
+
+  th, td{border:1px solid var(--grid);padding:6px 8px;font-size:12px;vertical-align:middle;text-align:left;}
+
+  thead th{
+    position:sticky;
+    top:0;
+    z-index:5;
+    background:#f8fafc;
+    color:#374151;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+  }
+
+  tbody tr:hover td{background:#f9fbfd;}
+
+  .col-num{
+    width:48px;
+    text-align:center;
+    color:var(--muted);
+  }
+
+  .muted{color:var(--muted)}
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    border-radius:999px;
+    padding:3px 8px;
+    font-size:12px;
+    border:1px solid var(--line);
+    background:#f9fafb;
+  }
+  .chip.green{background:#ecfdf3;border-color:#bbf7d0;color:#166534}
+  .chip.red{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+  .chip.blue{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+
+  .person{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+  }
+  .person strong{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .toggle{
+    width:26px;
+    height:26px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:#fff;
+    cursor:pointer;
+    flex:0 0 auto;
+    padding:0;
+    line-height:1;
+  }
+
+  .details{
+    display:none;
+    margin-top:6px;
+    padding:8px;
+    border:1px solid var(--grid);
+    border-radius:8px;
+    background:#fafafa;
+    color:#4b5563;
+    font-size:12px;
+    line-height:1.5;
+  }
+  .details.open{display:block}
+
+  .row-actions{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+
+  .empty{
+    padding:28px 14px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(17,24,39,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:100;
+  }
+  .modal-backdrop.open{display:flex}
+  .modal{
+    width:min(520px,100%);
+    background:#fff;
+    border-radius:12px;
+    border:1px solid var(--line);
+    overflow:hidden;
+    box-shadow:none;
+  }
+  .modal-head{
+    padding:12px 14px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .modal-head h2{
+    margin:0;
+    font-size:15px;
+  }
+  .modal-head p{
+    margin:4px 0 0;
+    color:var(--muted);
+    font-size:12px;
+  }
+  .modal-body{padding:14px}
+  .modal-foot{
+    padding:12px 14px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    flex-wrap:wrap;
+    background:#fafafa;
+  }
+
+  .form{
+    display:grid;
+    gap:10px;
+  }
+  .field{
+    display:grid;
+    gap:6px;
+  }
+  .field label{
+    font-size:12px;
+    font-weight:700;
+    color:#374151;
+  }
+  .field input{
+    width:100%;
+    padding:10px 11px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    outline:none;
+    background:#fff;
+  }
+  .field input:focus{
+    border-color:#93c5fd;
+    box-shadow:0 0 0 3px rgba(59,130,246,.12);
+  }
+  .help{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+
+  .sheet-subbar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+    background:#fbfcfd;
+  }
+  .sheet-subbar .search{
+    flex:1;
+    min-width:180px;
+    max-width:320px;
+    padding:6px 8px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+    outline:none;
+    font:inherit;
+  }
+  .sheet-subbar .search:focus{
+    border-color:#9fb8d7;
+    box-shadow:0 0 0 2px rgba(59,130,246,.08);
+  }
+  .sheet-subbar .hint{
+    font-size:12px;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+  .row-actions{
+    display:flex;
+    gap:4px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--text);
+    border-radius:4px;
+    padding:6px 8px;
+    cursor:pointer;
+    line-height:1;
+    box-shadow:none;
+    font-size:12px;
+  }
+  .btn.success,.btn.danger,.btn.warn{padding:6px 8px;min-width:62px}
+  .person{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    min-width:0;
+    line-height:1.2;
+  }
+  .person strong{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-weight:600;
+  }
+  .toggle{
+    width:22px;
+    height:22px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+    cursor:pointer;
+    flex:0 0 auto;
+    padding:0;
+    line-height:1;
+    font-size:12px;
+  }
+  .details{
+    display:none;
+    margin-top:4px;
+    padding:6px 8px;
+    border:1px solid var(--grid);
+    border-radius:4px;
+    background:#fbfbfb;
+    color:#4b5563;
+    font-size:11px;
+    line-height:1.35;
+  }
+  .details.open{display:block}
+
+  @media (max-width: 760px){
+    .sheet{padding:6px}
+    .toolbar{gap:6px}
+    .content{max-height:none}
+    table{min-width:700px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="toolbar">
+    <div class="brand">Control de Horarios Pro</div>
+    <button class="btn primary" id="newGroupBtn">Nuevo grupo</button>
+    <button class="btn" id="exportBtn">Exportar JSON</button>
+    <label class="btn" for="importFile" style="cursor:pointer;">Importar JSON</label>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+    <div class="spacer"></div>
+    <span class="muted" id="statusText" style="font-size:12px;">Listo</span>
+  </div>
+
+  <div class="tabs-wrap">
+    <div class="tabs" id="tabs"></div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-box">
+      <div class="sheet-head">
+        <div class="sheet-title">
+          <h1 id="viewTitle">Registro</h1>
+          <p id="viewSubtitle">Historial de entradas y salidas</p>
+        </div>
+        <div class="sheet-actions" id="actions"></div>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div>
+        <h2 id="modalTitle">Título</h2>
+        <p id="modalSubtitle">Subtítulo</p>
+      </div>
+      <button class="btn" id="closeModalBtn">Cerrar</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const STORAGE = "horarios_pro_excel_simple_v1";
+  const state = loadState();
+  const openDetails = new Set();
+  let memberSearch = "";
+
+  const el = {
+    tabs: document.getElementById("tabs"),
+    viewTitle: document.getElementById("viewTitle"),
+    viewSubtitle: document.getElementById("viewSubtitle"),
+    actions: document.getElementById("actions"),
+    content: document.getElementById("content"),
+    statusText: document.getElementById("statusText"),
+    newGroupBtn: document.getElementById("newGroupBtn"),
+    exportBtn: document.getElementById("exportBtn"),
+    importFile: document.getElementById("importFile"),
+    modalBackdrop: document.getElementById("modalBackdrop"),
+    modalTitle: document.getElementById("modalTitle"),
+    modalSubtitle: document.getElementById("modalSubtitle"),
+    modalBody: document.getElementById("modalBody"),
+    modalFoot: document.getElementById("modalFoot"),
+    closeModalBtn: document.getElementById("closeModalBtn"),
+  };
+
+  if (!state.groups.length) {
+    state.groups = [
+      {
+        id: uid(),
+        name: "Grupo A",
+        members: [
+          { id: uid(), name: "Perez Juan", dni: "12345678", patente: "AA123BB" },
+          { id: uid(), name: "Gomez Ana", dni: "23456789", patente: "AB456CD" }
+        ]
+      }
+    ];
+    saveState();
+  }
+
+  if (state.active !== "registro" && !state.groups.some(g => g.id === state.active)) {
+    state.active = "registro";
+    saveState();
+  }
+
+  function uid() {
+    return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE);
+      if (!raw) return { active: "registro", groups: [], records: [] };
+      const parsed = JSON.parse(raw);
+      return {
+        active: parsed.active || "registro",
+        groups: Array.isArray(parsed.groups) ? parsed.groups : [],
+        records: Array.isArray(parsed.records) ? parsed.records : []
+      };
+    } catch {
+      return { active: "registro", groups: [], records: [] };
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE, JSON.stringify(state));
+  }
+
+  function setStatus(text) {
+    el.statusText.textContent = text;
+  }
+
+  function groupById(id) {
+    return state.groups.find(g => g.id === id) || null;
+  }
+
+  function fmt(ts) {
+    return new Intl.DateTimeFormat("es-AR", {
+      dateStyle: "short",
+      timeStyle: "medium"
+    }).format(new Date(ts));
+  }
+
+  function movementLabel(type) {
+    return type === "Entrada" ? "Entrada" : "Salida";
+  }
+
+  function activeLabel() {
+    return state.active === "registro" ? "Registro" : (groupById(state.active)?.name || "Grupo");
+  }
+
+  function render() {
+    renderTabs();
+    renderHeader();
+    renderContent();
+    setStatus(state.active === "registro" ? `${state.records.length} movimientos` : `${groupById(state.active)?.members.length || 0} personas`);
+  }
+
+  function renderTabs() {
+    el.tabs.innerHTML = "";
+
+    const reg = document.createElement("button");
+    reg.className = "tab" + (state.active === "registro" ? " active" : "");
+    reg.textContent = `Registro (${state.records.length})`;
+    reg.onclick = () => {
+      state.active = "registro";
+      saveState();
+      render();
+    };
+    el.tabs.appendChild(reg);
+
+    state.groups.forEach(group => {
+      const tab = document.createElement("button");
+      tab.className = "tab" + (state.active === group.id ? " active" : "");
+      tab.textContent = group.name;
+      tab.onclick = () => {
+        state.active = group.id;
+        saveState();
+        render();
+      };
+      el.tabs.appendChild(tab);
+    });
+  }
+
+  function renderHeader() {
+    el.viewTitle.textContent = activeLabel();
+    el.actions.innerHTML = "";
+
+    if (state.active === "registro") {
+      el.viewSubtitle.textContent = "Historial de entradas y salidas";
+      el.actions.appendChild(btn("Limpiar", "warn", clearRecords));
+      return;
+    }
+
+    const group = groupById(state.active);
+    el.viewSubtitle.textContent = "Formato compacto para carga rápida";
+    el.actions.appendChild(btn("Agregar personal", "primary", () => openMemberModal(group)));
+    el.actions.appendChild(btn("Editar grupo", "", () => openGroupModal(group)));
+    el.actions.appendChild(btn("Eliminar grupo", "danger", () => deleteGroup(group.id)));
+  }
+
+  function renderContent() {
+    if (state.active === "registro") return renderRegistro();
+    const group = groupById(state.active);
+    if (!group) {
+      el.content.innerHTML = `<div class="empty">Grupo no encontrado.</div>`;
+      return;
+    }
+    renderGrupo(group);
+  }
+
+  function renderRegistro() {
+    const records = [...state.records].sort((a, b) => a.ts - b.ts);
+
+    if (!records.length) {
+      el.content.innerHTML = `<div class="empty">Todavía no hay movimientos.</div>`;
+      return;
+    }
+
+    el.content.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th class="col-num">#</th>
+            <th>Fecha y hora</th>
+            <th>Grupo</th>
+            <th>Personal</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${records.map((r, i) => {
+            const g = groupById(r.groupId);
+            const m = g?.members.find(x => x.id === r.memberId);
+            return `
+              <tr>
+                <td class="col-num">${i + 1}</td>
+                <td>${fmt(r.ts)}</td>
+                <td>${escapeHtml(g?.name || "Grupo eliminado")}</td>
+                <td>${escapeHtml(m?.name || "Persona eliminada")}</td>
+                <td><span class="chip ${r.type === "Entrada" ? "green" : "red"}">${movementLabel(r.type)}</span></td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderGrupo(group) {
+    const search = memberSearch.trim().toLowerCase();
+    const members = group.members.filter(m => !search || m.name.toLowerCase().includes(search));
+
+    el.content.innerHTML = `
+      <div class="sheet-subbar">
+        <input class="search" id="memberSearchInput" type="search" placeholder="Buscar personal..." value="${escapeHtmlAttr(memberSearch)}">
+        <span class="hint">${members.length}/${group.members.length} personas</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-num">#</th>
+            <th>Personal</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th>Opciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${members.length ? members.map((m, i) => {
+            const open = openDetails.has(m.id);
+            const last = [...state.records]
+              .filter(r => r.groupId === group.id && r.memberId === m.id)
+              .sort((a, b) => b.ts - a.ts)[0];
+
+            return `
+              <tr>
+                <td class="col-num">${i + 1}</td>
+                <td>
+                  <div class="person">
+                    <button class="toggle" data-toggle="${m.id}" title="Ver datos">▾</button>
+                    <strong title="${escapeHtmlAttr(m.name)}">${escapeHtml(m.name)}</strong>
+                  </div>
+                  <div class="details ${open ? "open" : ""}">
+                    <div><b>Último movimiento:</b> ${last ? `${movementLabel(last.type)} — ${fmt(last.ts)}` : "---"}</div>
+                    <div><b>DNI:</b> ${escapeHtml(m.dni || "---")}</div>
+                    <div><b>Patente:</b> ${escapeHtml(m.patente || "---")}</div>
+                  </div>
+                </td>
+                <td><button class="btn success" data-action="Entrada" data-member="${m.id}">Entra</button></td>
+                <td><button class="btn danger" data-action="Salida" data-member="${m.id}">Sale</button></td>
+                <td>
+                  <div class="row-actions">
+                    <button class="btn" data-edit-member="${m.id}">Editar</button>
+                    <button class="btn" data-del-member="${m.id}">Borrar</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("") : `<tr><td colspan="5" class="empty">Sin resultados.</td></tr>`}
+        </tbody>
+      </table>
+    `;
+
+    const searchInput = document.getElementById("memberSearchInput");
+    if (searchInput) {
+      searchInput.addEventListener("input", e => {
+        memberSearch = e.target.value;
+        render();
+      });
+    }
+
+    el.content.querySelectorAll("[data-toggle]").forEach(button => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.toggle;
+        if (openDetails.has(id)) openDetails.delete(id);
+        else openDetails.add(id);
+        render();
+      });
+    });
+
+    el.content.querySelectorAll("[data-action]").forEach(button => {
+      button.addEventListener("click", () => registerMovement(group.id, button.dataset.member, button.dataset.action));
+    });
+
+    el.content.querySelectorAll("[data-edit-member]").forEach(button => {
+      button.addEventListener("click", () => openMemberModal(group, group.members.find(m => m.id === button.dataset.editMember)));
+    });
+
+    el.content.querySelectorAll("[data-del-member]").forEach(button => {
+      button.addEventListener("click", () => deleteMember(group.id, button.dataset.delMember));
+    });
+  }
+
+  function registerMovement(groupId, memberId, type) {
+    const group = groupById(groupId);
+    const member = group?.members.find(m => m.id === memberId);
+    if (!group || !member) return;
+
+    state.records.push({
+      id: uid(),
+      ts: Date.now(),
+      groupId,
+      memberId,
+      type
+    });
+    saveState();
+    render();
+  }
+
+  function clearRecords() {
+    if (!state.records.length) return;
+    if (!confirm("¿Limpiar todo el registro?")) return;
+    state.records = [];
+    saveState();
+    render();
+  }
+
+  function openGroupModal(group = null) {
+    const editing = !!group;
+    el.modalTitle.textContent = editing ? "Editar grupo" : "Nuevo grupo";
+    el.modalSubtitle.textContent = editing ? "Cambiar nombre del grupo" : "Crear una nueva hoja de grupo";
+    el.modalBody.innerHTML = `
+      <form id="groupForm" class="form">
+        <div class="field">
+          <label for="groupName">Nombre del grupo</label>
+          <input id="groupName" name="groupName" value="${escapeHtmlAttr(group?.name || "")}" placeholder="Ej: Operaciones" autofocus>
+        </div>
+        <div class="help">Cada grupo aparece como una pestaña, igual que una hoja de cálculo.</div>
+      </form>
+    `;
+    el.modalFoot.innerHTML = "";
+    const cancel = btn("Cancelar", "", closeModal);
+    const save = btn(editing ? "Guardar" : "Crear", "primary", () => {
+      const form = document.getElementById("groupForm");
+      const name = form.groupName.value.trim();
+      if (!name) return;
+
+      if (editing) {
+        group.name = name;
+      } else {
+        const newGroup = { id: uid(), name, members: [] };
+        state.groups.push(newGroup);
+        state.active = newGroup.id;
+      }
+      saveState();
+      closeModal();
+      render();
+    });
+    el.modalFoot.append(cancel, save);
+    openModal();
+  }
+
+  function openMemberModal(group, member = null) {
+    const editing = !!member;
+    el.modalTitle.textContent = editing ? "Editar personal" : "Nuevo personal";
+    el.modalSubtitle.textContent = group.name;
+    el.modalBody.innerHTML = `
+      <form id="memberForm" class="form">
+        <div class="field">
+          <label for="memberName">Apellido y nombre</label>
+          <input id="memberName" name="memberName" value="${escapeHtmlAttr(member?.name || "")}" placeholder="Ej: Pérez Juan" autofocus>
+        </div>
+        <div class="field">
+          <label for="memberDni">DNI</label>
+          <input id="memberDni" name="memberDni" value="${escapeHtmlAttr(member?.dni || "")}" placeholder="Solo números">
+        </div>
+        <div class="field">
+          <label for="memberPatente">Patente</label>
+          <input id="memberPatente" name="memberPatente" value="${escapeHtmlAttr(member?.patente || "")}" placeholder="Ej: AA123BB">
+        </div>
+        <div class="help">Los datos se muestran solo al desplegar la fila.</div>
+      </form>
+    `;
+    el.modalFoot.innerHTML = "";
+    const cancel = btn("Cancelar", "", closeModal);
+    const save = btn(editing ? "Guardar" : "Agregar", "primary", () => {
+      const form = document.getElementById("memberForm");
+      const name = form.memberName.value.trim();
+      const dni = form.memberDni.value.trim();
+      const patente = form.memberPatente.value.trim();
+      if (!name) return;
+
+      if (editing) {
+        member.name = name;
+        member.dni = dni;
+        member.patente = patente;
+      } else {
+        group.members.push({ id: uid(), name, dni, patente });
+      }
+      saveState();
+      closeModal();
+      render();
+    });
+    el.modalFoot.append(cancel, save);
+    openModal();
+  }
+
+  function deleteGroup(id) {
+    const group = groupById(id);
+    if (!group) return;
+    if (!confirm(`¿Eliminar el grupo "${group.name}"?`)) return;
+    state.groups = state.groups.filter(g => g.id !== id);
+    state.records = state.records.filter(r => r.groupId !== id);
+    if (state.active === id) state.active = "registro";
+    saveState();
+    render();
+  }
+
+  function deleteMember(groupId, memberId) {
+    const group = groupById(groupId);
+    const member = group?.members.find(m => m.id === memberId);
+    if (!group || !member) return;
+    if (!confirm(`¿Borrar a "${member.name}"?`)) return;
+    group.members = group.members.filter(m => m.id !== memberId);
+    state.records = state.records.filter(r => !(r.groupId === groupId && r.memberId === memberId));
+    openDetails.delete(memberId);
+    saveState();
+    render();
+  }
+
+  function openModal() {
+    el.modalBackdrop.classList.add("open");
+    el.modalBackdrop.setAttribute("aria-hidden", "false");
+  }
+
+  function closeModal() {
+    el.modalBackdrop.classList.remove("open");
+    el.modalBackdrop.setAttribute("aria-hidden", "true");
+    el.modalBody.innerHTML = "";
+    el.modalFoot.innerHTML = "";
+  }
+
+  function btn(text, cls, onClick) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn" + (cls ? " " + cls : "");
+    b.textContent = text;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function escapeHtmlAttr(str) {
+    return escapeHtml(str).replaceAll("\n", " ");
+  }
+
+  function exportJSON() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "control_horarios.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function importJSON(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        state.active = parsed.active || "registro";
+        state.groups = Array.isArray(parsed.groups) ? parsed.groups : [];
+        state.records = Array.isArray(parsed.records) ? parsed.records : [];
+        if (state.active !== "registro" && !state.groups.some(g => g.id === state.active)) {
+          state.active = "registro";
+        }
+        saveState();
+        render();
+      } catch {
+        alert("El archivo no es válido.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  el.newGroupBtn.addEventListener("click", () => openGroupModal());
+  el.exportBtn.addEventListener("click", exportJSON);
+  el.importFile.addEventListener("change", e => {
+    const file = e.target.files && e.target.files[0];
+    if (file) importJSON(file);
+    e.target.value = "";
+  });
+  el.closeModalBtn.addEventListener("click", closeModal);
+  el.modalBackdrop.addEventListener("click", e => {
+    if (e.target === el.modalBackdrop) closeModal();
+  });
+  window.addEventListener("keydown", e => {
+    if (e.key === "Escape") closeModal();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
